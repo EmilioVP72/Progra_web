@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class ClientController extends Controller
 {
@@ -49,7 +50,7 @@ class ClientController extends Controller
             'phone' => 'required|digits:10',
             'email' => 'required|email|unique:client,email', 
             'password' => 'required|string',
-            'photo' => 'required|string'
+            'photo' => 'required|image|mimes:jpg,png,jpeg|max:5120'
         ]);
 
         if ($validator->fails()) { 
@@ -61,13 +62,16 @@ class ClientController extends Controller
             return response()->json($data, 400);
         }
 
+        $photoFile = $request->file('photo');
+        $photoPath = $photoFile->store('clients', 'public');
+
         $clients = Client::create([
             'name' => $request->name,
             'lastname' => $request->lastname,
             'phone' => $request->phone, 
             'email' => $request->email,
             'password' => Hash::make($request->password), 
-            'photo' => $request->photo
+            'photo' => $photoPath
         ]);
 
         if (!$clients) {
@@ -75,6 +79,7 @@ class ClientController extends Controller
                 'message' => 'Error al crear el cliente',
                 'status' => 500
             ];
+            Storage::disk('public')->delete($photoPath);
             return response()->json($data, 500);
         }
 
@@ -118,36 +123,33 @@ class ClientController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'name' => 'string',
-            'lastname' => 'string',
-            'phone' => 'digits:10',
-            'email' => 'email|unique:clients,email,' . $id, 
-            'photo' => 'string'
+            'name' => 'sometimes|string|required',
+            'lastname' => 'sometimes|string|required',
+            'phone' => 'sometimes|required|digits:10',
+            'email' => 'sometimes|required|email|unique:clients,email,' . $id,
+            'photo' => 'sometimes|image|mimes:jpg,png|max:5120'
         ]);
 
         if($validator->fails()){
-            $data = [
+            return response()->json([
                 'message' => 'Error en la validación de los datos',
                 'errors' => $validator->errors(),
                 'status' => 400
-            ];
-            return response()->json($data, 400);
+            ], 400);
         }
 
-        if ($request->has('name')) {
-            $client->name = $request->name;
-        }
-        if ($request->has('lastname')) {
-            $client->lastname = $request->lastname;
-        }
-        if ($request->has('phone')) {
-            $client->phone = $request->phone;
-        }
-        if ($request->has('email')) {
-            $client->email = $request->email;
-        }
-        if ($request->has('photo')) {
-            $client->photo = $request->photo;
+        // Actualiza solo los campos que vienen en la petición
+        $client->fill($request->only(['name', 'lastname', 'phone', 'email']));
+
+        if ($request->hasFile('photo')) {
+            // Elimina la foto anterior si existe
+            if ($client->photo) {
+                Storage::disk('public')->delete($client->photo);
+            }
+            
+            $photoFile = $request->file('photo');
+            $photoPath = $photoFile->store('clients', 'public');
+            $client->photo = $photoPath;
         }
 
         $client->save();
@@ -160,4 +162,3 @@ class ClientController extends Controller
         return response()->json($data, 200);
     }
 }
-
