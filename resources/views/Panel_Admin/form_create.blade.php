@@ -4,60 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Nuevo Cliente</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- Inclusión de Bootstrap CSS vía CDN para usar los componentes --}}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+    {{-- Mantenemos la inclusión de app.js para Axios y la lógica del formulario --}}
+    @vite(['resources/js/app.js'])
 </head>
-<body class="bg-gray-100 font-sans antialiased flex justify-center items-center min-h-screen">
-    <div class="w-full max-w-xl bg-white p-8 rounded-xl shadow-2xl">
-        <h1 class="text-3xl font-bold text-indigo-800 mb-8 border-b pb-4">Registro de Nuevo Cliente</h1>
-        
-        <form id="create-client-form">
-            @csrf
-            <div id="messages" class="mb-4"></div>
+{{-- Clases de Bootstrap para centrar el contenido --}}
+<body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-6">
+                {{-- Componente Card de Bootstrap para el contenedor principal --}}
+                <div class="card shadow-lg p-4">
+                    <div class="card-body">
+                        <h1 class="h3 text-primary mb-4 border-bottom pb-3">Registro de Nuevo Cliente</h1>
+                        
+                        <form id="create-client-form">
+                            @csrf
+                            <div id="messages" class="mb-4"></div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-1">
-                    <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
-                    <input type="text" id="name" name="name" required class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                
-                <div class="space-y-1">
-                    <label for="lastname" class="block text-sm font-medium text-gray-700">Apellido</label>
-                    <input type="text" id="lastname" name="lastname" required class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-            </div>
+                            {{-- Fila 1: Nombre y Apellido (usando grid de Bootstrap) --}}
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="name" class="form-label">Nombre</label>
+                                    <input type="text" id="name" name="name" required class="form-control">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="lastname" class="form-label">Apellido</label>
+                                    <input type="text" id="lastname" name="lastname" required class="form-control">
+                                </div>
+                            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                 <div class="space-y-1">
-                    <label for="phone" class="block text-sm font-medium text-gray-700">Teléfono (10 dígitos)</label>
-                    <input type="text" id="phone" name="phone" required class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
+                            {{-- Fila 2: Teléfono y Email --}}
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="phone" class="form-label">Teléfono (10 dígitos)</label>
+                                    <input type="text" id="phone" name="phone" required class="form-control">
+                                </div>
 
-                <div class="space-y-1">
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="email" name="email" required class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" id="email" name="email" required class="form-control">
+                                </div>
+                            </div>
+                            
+                            {{-- Contraseña --}}
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña</label>
+                                <input type="password" id="password" name="password" required class="form-control">
+                            </div>
+                            
+                            {{-- URL de la Foto --}}
+                            <div class="mb-4">
+                                <label for="photo" class="form-label">URL de la Foto</label>
+                                <input type="url" id="photo" name="photo" required class="form-control">
+                            </div>
+
+                            {{-- Botones de acción --}}
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <a href="{{ route('admin.clients.index') }}" class="btn btn-link text-secondary">
+                                    ← Volver al Listado
+                                </a>
+                                {{-- Botón Guardar (usando clases de Bootstrap) --}}
+                                <button type="submit" class="btn btn-success btn-lg shadow-sm">
+                                    Guardar Cliente
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-            
-            <div class="space-y-1 mt-6">
-                <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
-                <input type="password" id="password" name="password" required class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            
-            <div class="space-y-1 mt-6">
-                <label for="photo" class="block text-sm font-medium text-gray-700">URL de la Foto</label>
-                <input type="url" id="photo" name="photo" required class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-
-            <div class="flex justify-between items-center mt-8">
-                <a href="{{ route('admin.clients.index') }}" class="text-gray-600 hover:text-indigo-800 font-medium transition duration-150 ease-in-out">
-                    ← Volver al Listado
-                </a>
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
-                    Guardar Cliente
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
+
+    {{-- Inclusión de Bootstrap JS (para el funcionamiento de las alertas) --}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
     <script>
         document.getElementById('create-client-form').addEventListener('submit', async function(e) {
@@ -73,12 +96,15 @@
             delete data._token; 
 
             try {
+                // Se utiliza axios (cargado en app.js)
                 const response = await axios.post('/api/clients', data);
                 
+                // Uso de componente Bootstrap: Alert para éxito
                 messagesDiv.innerHTML = `
-                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-4" role="alert">
-                        <p class="font-bold">✅ Éxito: ${response.data.message}</p>
-                        <p>Cliente ${response.data.client.name} creado con ID: ${response.data.client.id}.</p>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <p class="mb-0"><strong>✅ Éxito: ${response.data.message}</strong></p>
+                        <p class="mb-0">Cliente ${response.data.client.name} creado con ID: ${response.data.client.id}.</p>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 `;
                 
@@ -86,10 +112,10 @@
             } catch (error) {
                 console.error("Error al crear cliente:", error.response || error);
                 
-                let errorHtml = '<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-4" role="alert">';
+                let errorHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
                 
                 if (error.response && error.response.data.errors) {
-                    errorHtml += '<p class="font-bold">❌ Error de Validación:</p><ul>';
+                    errorHtml += '<p class="mb-0"><strong>❌ Error de Validación:</strong></p><ul>';
                     for (const field in error.response.data.errors) {
                         error.response.data.errors[field].forEach(msg => {
                             errorHtml += `<li>- ${msg}</li>`;
@@ -97,12 +123,12 @@
                     }
                     errorHtml += '</ul>';
                 } else if (error.response && error.response.data.message) {
-                    errorHtml += `<p class="font-bold">❌ Error: ${error.response.data.message}</p>`;
+                    errorHtml += `<p class="mb-0"><strong>❌ Error: ${error.response.data.message}</strong></p>`;
                 } else {
-                    errorHtml += `<p class="font-bold">❌ Error desconocido al crear el cliente.</p>`;
+                    errorHtml += `<p class="mb-0"><strong>❌ Error desconocido al crear el cliente.</strong></p>`;
                 }
 
-                errorHtml += '</div>';
+                errorHtml += '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
                 messagesDiv.innerHTML = errorHtml;
             }
         });

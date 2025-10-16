@@ -1,123 +1,247 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración de Clientes</title>
-    {{-- Asegúrate de que tu configuración de Vite esté corriendo (npm run dev) --}}
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <title>Panel de Administración - Clientes</title>
+    {{-- Inclusión de Bootstrap CSS vía CDN --}}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+    {{-- Para incluir iconos de Bootstrap (opcional, pero mejora la estética) --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    @vite(['resources/js/app.js'])
+
+    {{-- Estilos personalizados para el tema de Suplementos (Dark + Neon) --}}
+    <style>
+        :root {
+            --bs-body-bg: #1C1C1C;
+            /* Fondo oscuro */
+            --bs-body-color: #F8F9FA;
+            /* Texto claro */
+            --bs-primary: #00FF7F;
+            /* Verde Neón para acentos */
+            --bs-info: #00BFFF;
+            /* Azul Neón para botones */
+        }
+
+        body {
+            background-color: var(--bs-body-bg);
+            color: var(--bs-body-color);
+        }
+
+        .text-neon {
+            color: var(--bs-primary) !important;
+        }
+
+        .btn-neon-primary {
+            background-color: var(--bs-primary);
+            color: #1C1C1C; /* Aseguramos que el texto sea oscuro */
+            border: 1px solid var(--bs-primary);
+            transition: all 0.3s;
+        }
+
+        .btn-neon-primary:hover {
+            background-color: transparent;
+            color: var(--bs-primary);
+        }
+
+        .card-dark {
+            background-color: #242424;
+            border: 1px solid #333333;
+            color: var(--bs-body-color);
+        }
+
+        .table-dark-custom {
+            --bs-table-bg: #212529;
+            --bs-table-border-color: #333333;
+            color: #ffffff; /* 👈 fuerza el texto blanco */
+        }
+
+        .table-dark-custom thead th {
+            color: #00FF7F; /* verde neón del encabezado */
+        }
+
+        .table-dark-custom td,
+        .table-dark-custom th {
+            color: #ffffff; /* 👈 texto blanco dentro del cuerpo */
+        }
+
+        .table-dark-custom tr:hover td {
+            background-color: #2b2b2b; /* efecto hover más claro */
+            color: #00FF7F; /* texto verde neón al pasar el mouse */
+        }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased">
-    <div class="container mx-auto p-4 md:p-8">
-        <div class="flex justify-between items-center mb-6 bg-white p-6 shadow-md rounded-lg">
-            <h1 class="text-3xl font-extrabold text-indigo-800">Clientes de Suplementos</h1>
-            <a href="{{ route('admin.clients.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-xl transition duration-300 ease-in-out transform hover:scale-105">
-                ➕ Nuevo Cliente
+
+<body>
+    <div class="container py-5">
+
+        {{-- Cabecera del Panel --}}
+        <div class="d-flex justify-content-between align-items-center mb-5 border-bottom border-secondary pb-3">
+            <h1 class="text-white">
+                Panel de Administración
+                <span class="text-neon fw-bold">Clientes</span>
+            </h1>
+
+            {{-- Botón para Crear Nuevo Cliente --}}
+            <a href="{{ route('admin.clients.create') }}" class="btn btn-neon-primary btn-lg shadow-lg">
+                <i class="bi bi-plus-circle-fill me-2"></i> Crear Nuevo Cliente
             </a>
         </div>
 
-        <div id="loading" class="text-center py-10 text-xl font-medium text-indigo-600">
-            Cargando clientes... 🏋️‍♂️
+        {{-- Contenedor de Mensajes (Alerts de Bootstrap) --}}
+        <div id="messages" class="mb-4"></div>
+
+        {{-- Contenedor de la Tabla (Card Oscuro) --}}
+        <div class="card card-dark shadow-lg">
+            <div class="card-body p-4">
+
+                <h2 class="card-title h4 mb-4 text-neon">Listado de Clientes</h2>
+
+                {{-- Barra de Búsqueda (Input de Bootstrap) --}}
+                <div class="mb-4">
+                    <input type="text" id="search-input"
+                        class="form-control form-control-lg bg-dark text-light border-secondary"
+                        placeholder="Buscar por Nombre, Email o Teléfono...">
+                </div>
+
+                {{-- Tabla de Clientes --}}
+                <div class="table-responsive">
+                    <table id="clients-table" class="table table-dark-custom table-striped table-hover align-middle">
+                        <thead class="text-neon border-bottom border-primary">
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Foto</th>
+                                <th scope="col">Nombre Completo</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Teléfono</th>
+                                <th scope="col">Acciones</th>
+                            </tr>
+                        </thead>
+                        {{-- ID usado en el script para la carga de datos --}}
+                        <tbody id="clients-list"> 
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Cargando clientes...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        
-        {{-- Contenedor de la Tabla --}}
-        <div class="bg-white shadow-xl rounded-lg overflow-x-auto hidden" id="clients-table-container">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nombre Completo</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Teléfono</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200" id="clients-table-body">
-                    {{-- Los clientes se cargarán con JavaScript --}}
-                </tbody>
-            </table>
-        </div>
-        
-        <p id="no-clients" class="text-center py-10 text-lg font-medium text-gray-500 hidden bg-white rounded-lg shadow-md">
-            No hay clientes registrados. ¡Comienza creando uno!
-        </p>
     </div>
 
+    {{-- Inclusión de Bootstrap JS --}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+    @verbatim
     <script>
-        // Uso de axios (ya incluido en resources/js/bootstrap.js)
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            const tableBody = document.getElementById('clients-table-body');
-            const tableContainer = document.getElementById('clients-table-container');
-            const loading = document.getElementById('loading');
-            const noClients = document.getElementById('no-clients');
+        document.addEventListener('DOMContentLoaded', async function () {
+            // Se corrige el ID del tbody para que coincida con el HTML
+            const clientsList = document.getElementById('clients-list'); 
+            const messagesDiv = document.getElementById('messages');
+            const searchInput = document.getElementById('search-input');
+            let allClients = [];
 
+            // Función para mostrar mensajes (Alerta de Bootstrap)
+            function showMessage(message, type = 'success') {
+                messagesDiv.innerHTML = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+            }
+
+            // Función para cargar los datos de la API
             async function fetchClients() {
-                loading.classList.remove('hidden');
-                tableContainer.classList.add('hidden');
-                noClients.classList.add('hidden');
-                tableBody.innerHTML = '';
-                
                 try {
+                    // Usamos axios, importado vía @vite(['resources/js/app.js'])
                     const response = await axios.get('/api/clients');
-                    const clients = response.data;
-
-                    if (clients.length === 0) {
-                        noClients.classList.remove('hidden');
-                        return;
-                    }
-
-                    clients.forEach(client => {
-                        const row = `
-                            <tr id="client-${client.id}" class="hover:bg-indigo-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${client.id}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${client.name} ${client.lastname}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${client.phone}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${client.email}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                    <a href="/admin/clientes/${client.id}/editar" class="text-indigo-600 hover:text-indigo-800 font-semibold transition duration-150 ease-in-out mr-4">
-                                        Editar ✏️
-                                    </a>
-                                    <button onclick="deleteClient(${client.id})" class="text-red-600 hover:text-red-800 font-semibold transition duration-150 ease-in-out">
-                                        Borrar 🗑️
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                        tableBody.insertAdjacentHTML('beforeend', row);
-                    });
-
-                    tableContainer.classList.remove('hidden');
+                    allClients = response.data;
+                    renderClients(allClients);
                 } catch (error) {
-                    // Si el API devuelve 404, significa que no hay registros (basado en ClientController::All())
-                    if (error.response && error.response.status === 404) {
-                         noClients.classList.remove('hidden');
-                    } else {
-                        console.error("Error al obtener clientes:", error);
-                        alert('Ocurrió un error al cargar los clientes.');
-                    }
-                } finally {
-                    loading.classList.add('hidden');
+                    console.error("Error al cargar clientes:", error);
+                    clientsList.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">
+                        Error al cargar los datos. Verifique la conexión con la API.
+                    </td></tr>`;
+                    showMessage('No se pudo cargar la lista de clientes.', 'danger');
                 }
             }
 
-            window.deleteClient = async function(id) {
-                if (!confirm(`⚠️ ¿Estás seguro de que quieres eliminar al cliente con ID ${id}? Esta acción es irreversible.`)) {
+            // Función para renderizar clientes en la tabla
+            function renderClients(clients) {
+                if (clients.length === 0) {
+                    clientsList.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">
+                        No se encontraron clientes que coincidan con la búsqueda.
+                    </td></tr>`;
+                    return;
+                }
+
+                clientsList.innerHTML = clients.map(client => `
+                    <tr id="client-row-${client.id}">
+                        <th scope="row" class="text-neon">${client.id}</th>
+                        <td>
+                            <img src="${client.photo}" alt="${client.name}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                        </td>
+                        <td>${client.name} ${client.lastname}</td>
+                        <td>${client.email}</td>
+                        <td>${client.phone}</td>
+                        <td class="d-flex gap-2">
+                            <a href="/admin/clientes/${client.id}/editar" class="btn btn-sm btn-info text-dark">
+                                Editar
+                            </a>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteClient(${client.id})">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // Lógica de Búsqueda
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+                const filteredClients = allClients.filter(client =>
+                    client.name.toLowerCase().includes(searchTerm) ||
+                    client.lastname.toLowerCase().includes(searchTerm) ||
+                    client.email.toLowerCase().includes(searchTerm) ||
+                    client.phone.includes(searchTerm)
+                );
+                renderClients(filteredClients);
+            });
+
+            window.deleteClient = async function (id) {
+                if (!confirm('¿Estás seguro de que quieres eliminar al cliente con ID: ' + id + '? Esta acción no se puede deshacer.')) {
                     return;
                 }
 
                 try {
-                    const response = await axios.delete(`/api/clients/${id}`);
-                    document.getElementById(`client-${id}`).remove();
-                    alert(response.data.message || 'Cliente eliminado correctamente.');
+                    // Eliminación de datos (usa axios)
+                    await axios.delete(`/api/clients/${id}`);
+
+                    // Eliminar la fila de la tabla
+                    document.getElementById(`client-row-${id}`).remove();
+
+                    // Actualizar la lista local
+                    allClients = allClients.filter(c => c.id !== id);
+
+                    showMessage(`Cliente con ID ${id} eliminado correctamente.`, 'danger');
                 } catch (error) {
                     console.error("Error al eliminar cliente:", error);
-                    alert('Error al eliminar el cliente. Por favor, verifica la consola.');
+                    showMessage(`Error al eliminar cliente con ID ${id}.`, 'danger');
                 }
-            }
-            
+            };
+
+            // Iniciar la carga de clientes
             fetchClients();
         });
     </script>
+    @endverbatim
 </body>
+
 </html>
